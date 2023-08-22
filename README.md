@@ -48,3 +48,7 @@
     ```bash
     .\down.sh
     ```
+
+## Miscellaneous
+
+`OpenTelemetry Collector Metrics.ndjson` is a Kibana Dahsboard (8.9.1) to see the receiver and exporter metrics of the Otel Collector.
