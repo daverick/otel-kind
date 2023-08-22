@@ -10,7 +10,13 @@
 
 ## Install
 
-1. Create a secret with you Elastic APM endpoint and APM secret token:
+1. Create a new K8s cluster with kind
+    
+    ```bash
+    ./up.sh
+    ```
+    
+2. Create a secret with you Elastic APM endpoint and APM secret token:
     
     ```bash
     kubectl create secret generic elastic-secret \                      
@@ -18,21 +24,20 @@
     --from-literal=elastic_apm_secret_token='your_APM_secret_token'
     ```
     
-2. Create a new K8s cluster with kind
-    
-    ```bash
-    #create a new K8s cluster with kind
-    ./up.sh
-    ```
-
-3. Get the OpenTelemetry demo helm charts locally 
+3. Get the OpenTelemetry demo helm charts locally
     
     ```bash
     helm pull --untar open-telemetry/opentelemetry-demo
     ```
-6. Install the `otel-demo` release
+    
+4. Install the `otel-demo` release
     ```bash
     helm upgrade --install otel-demo opentelemetry-demo --values values.yaml
     ```
     
-6. Explore !
+5. Explore !
+6. Tear down everything
+    
+    ```bash
+    .\down.sh
+    ```
