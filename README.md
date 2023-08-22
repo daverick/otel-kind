@@ -30,13 +30,20 @@
     helm pull --untar open-telemetry/opentelemetry-demo
     ```
     
-4. Install the `otel-demo` release
+4. Patch the opentelemetry-collector chart to allow featureflags
+    
+    ```bah
+    patch -ruN -d . < otel-col-charts-template-pod.patch
+    patch -ruN -d . < otel-col-charts-template-pod.patch
+    ```
+    
+5. Install the `otel-demo` release
     ```bash
     helm upgrade --install otel-demo opentelemetry-demo --values values.yaml
     ```
     
-5. Explore !
-6. Tear down everything
+6. Explore !
+7. Tear down everything
     
     ```bash
     .\down.sh

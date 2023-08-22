@@ -1,4 +1,5 @@
 opentelemetry-collector:
+  # elastic APM endpoint and APM secret_token
   extraEnvs:
     - name: ELASTIC_APM_ENDPOINT
       valueFrom:
@@ -12,60 +13,22 @@ opentelemetry-collector:
           key: elastic_apm_secret_token
   config:
     exporters:
+      #sending everything to elastic using otlp
       otlp/elastic:
         endpoint: ${ELASTIC_APM_ENDPOINT}
         headers:
           Authorization: Bearer ${ELASTIC_APM_SECRET_TOKEN}
         compression: none
     receivers:
+      # receiving otlp by grpc and http
       otlp:
         protocols:
           grpc:
-            endpoint: ${MY_POD_IP}:4317
           http:
             cors:
               allowed_origins:
               - http://*
               - https://*
-            endpoint: ${MY_POD_IP}:4318
-      prometheus:
-        config:
-          scrape_configs:
-          - job_name: opentelemetry-collector
-            scrape_interval: 10s
-            static_configs:
-            - targets:
-              - ${env:MY_POD_IP}:8888
-    connectors:
-      spanmetrics:
-        namespace: span.metrics
-    processors:
-      metricstransform/metrics_prometheus:
-        transforms:
-          - include: ^otelcol_([^_]*)_([^_]*)_([^_]*)_([^_]*)_([^_]*)_([^_]*)$$
-            match_type: regexp
-            action: update
-            new_name: otelcol.$${1}.$${2}.$${3}.$${4}.$${5}.$${6}
-          - include: ^otelcol_([^_]*)_([^_]*)_([^_]*)_([^_]*)_([^_]*)$$
-            match_type: regexp
-            action: update
-            new_name: otelcol.$${1}.$${2}.$${3}.$${4}.$${5}
-          - include: ^otelcol_([^_]*)_([^_]*)_([^_]*)_([^_]*)$$
-            match_type: regexp
-            action: update
-            new_name: otelcol.$${1}.$${2}.$${3}.$${4}
-          - include: ^otelcol_([^_]*)_([^_]*)_([^_]*)$$
-            match_type: regexp
-            action: update
-            new_name: otelcol.$${1}.$${2}.$${3}
-          - include: ^otelcol_([^_]*)_([^_]*)$$
-            match_type: regexp
-            action: update
-            new_name: otelcol.$${1}.$${2}
-          - include: ^otelcol_([^_]*)$$
-            match_type: regexp
-            action: update
-            new_name: otelcol.$${1}
     service:
       pipelines:
         traces:
@@ -75,20 +38,9 @@ opentelemetry-collector:
           - memory_limiter
           exporters: 
           - otlp/elastic
-          - spanmetrics
-        metrics/prometheus:
-          receivers: 
-          - prometheus
-          processors:
-          - metricstransform/metrics_prometheus
-          - batch
-          - memory_limiter
-          exporters: [otlp/elastic]
         metrics:
           receivers: 
           - otlp
-          - spanmetrics
-          - prometheus
           processors:
           - batch
           - memory_limiter
@@ -100,9 +52,24 @@ opentelemetry-collector:
           - memory_limiter
           exporters: [otlp/elastic]
       telemetry:
+        #enable the telemetry on the collector itself
+        resource:
+          "service.name": "opentelemetry-collector"
         metrics:
-          address: ${env:MY_POD_IP}:8888
-
+          level: basic
+          readers:
+            # Configure a periodic metric reader.
+            - periodic:
+                interval: 1000
+                exporter:
+                  # Configure exporter to the collector itself
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: localhost:4318
+        logs:
+          level: info
+  #some featureGates are necessary to make it work
+  featureGates: "telemetry.useOtelForInternalMetrics,telemetry.useOtelWithSDKConfigurationForInternalTelemetry,telemetry.disableHighCardinalityMetrics"
 grafana:
   enabled: false
 

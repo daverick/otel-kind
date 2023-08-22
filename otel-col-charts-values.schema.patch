@@ -1,0 +1,17 @@
+--- opentelemetry-demo/charts/opentelemetry-collector/values.schema.json	2023-08-22 15:07:50
++++ opentelemetry-demo/charts/opentelemetry-collector/values.schema.json	2023-08-22 10:06:43
+@@ -126,6 +126,14 @@
+       "description": "Configuration that applies to both standalone and agent collector. Overwritable by standalone and agent specific configs.",
+       "type": "object"
+     },
++    "featureGates": {
++      "type": "string",
++      "default": "",
++      "title": "The featureGates Schema",
++      "examples": [
++          "telemetry.useOtelForInternalMetrics"
++      ]
++  },
+     "image": {
+       "description": "Image use in both standalone and agent configs",
+       "type": "object",
