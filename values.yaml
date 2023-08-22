@@ -1,0 +1,121 @@
+opentelemetry-collector:
+  extraEnvs:
+    - name: ELASTIC_APM_ENDPOINT
+      valueFrom:
+        secretKeyRef:
+          name: elastic-secret
+          key: elastic_apm_endpoint
+    - name: ELASTIC_APM_SECRET_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: elastic-secret
+          key: elastic_apm_secret_token
+  config:
+    exporters:
+      otlp/elastic:
+        endpoint: ${ELASTIC_APM_ENDPOINT}
+        headers:
+          Authorization: Bearer ${ELASTIC_APM_SECRET_TOKEN}
+        compression: none
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: ${MY_POD_IP}:4317
+          http:
+            cors:
+              allowed_origins:
+              - http://*
+              - https://*
+            endpoint: ${MY_POD_IP}:4318
+      prometheus:
+        config:
+          scrape_configs:
+          - job_name: opentelemetry-collector
+            scrape_interval: 10s
+            static_configs:
+            - targets:
+              - ${env:MY_POD_IP}:8888
+    connectors:
+      spanmetrics:
+        namespace: span.metrics
+    processors:
+      metricstransform/metrics_prometheus:
+        transforms:
+          - include: ^otelcol_([^_]*)_([^_]*)_([^_]*)_([^_]*)_([^_]*)_([^_]*)$$
+            match_type: regexp
+            action: update
+            new_name: otelcol.$${1}.$${2}.$${3}.$${4}.$${5}.$${6}
+          - include: ^otelcol_([^_]*)_([^_]*)_([^_]*)_([^_]*)_([^_]*)$$
+            match_type: regexp
+            action: update
+            new_name: otelcol.$${1}.$${2}.$${3}.$${4}.$${5}
+          - include: ^otelcol_([^_]*)_([^_]*)_([^_]*)_([^_]*)$$
+            match_type: regexp
+            action: update
+            new_name: otelcol.$${1}.$${2}.$${3}.$${4}
+          - include: ^otelcol_([^_]*)_([^_]*)_([^_]*)$$
+            match_type: regexp
+            action: update
+            new_name: otelcol.$${1}.$${2}.$${3}
+          - include: ^otelcol_([^_]*)_([^_]*)$$
+            match_type: regexp
+            action: update
+            new_name: otelcol.$${1}.$${2}
+          - include: ^otelcol_([^_]*)$$
+            match_type: regexp
+            action: update
+            new_name: otelcol.$${1}
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: 
+          - batch
+          - memory_limiter
+          exporters: 
+          - otlp/elastic
+          - spanmetrics
+        metrics/prometheus:
+          receivers: 
+          - prometheus
+          processors:
+          - metricstransform/metrics_prometheus
+          - batch
+          - memory_limiter
+          exporters: [otlp/elastic]
+        metrics:
+          receivers: 
+          - otlp
+          - spanmetrics
+          - prometheus
+          processors:
+          - batch
+          - memory_limiter
+          exporters: [otlp/elastic]
+        logs:
+          receivers: [otlp]
+          processors:
+          - batch
+          - memory_limiter
+          exporters: [otlp/elastic]
+      telemetry:
+        metrics:
+          address: ${env:MY_POD_IP}:8888
+
+grafana:
+  enabled: false
+
+jaeger:
+  enabled: false
+
+prometheus:
+  enabled: false
+
+components:
+  frontend:
+    resources:
+      limits:
+        memory: 1Gi
+
+
