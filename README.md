@@ -30,7 +30,7 @@
     helm pull --untar open-telemetry/opentelemetry-demo
     ```
     
-4. Patch the opentelemetry-collector chart to allow featureflags
+4. Patch the OpenTelemetry-collector chart to allow Feature Flags
     
     ```bah
     patch -ruN -d . < otel-col-charts-template-pod.patch
