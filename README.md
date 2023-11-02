@@ -34,7 +34,7 @@
     
     ```bash
     patch -ruN -d . < otel-col-charts-template-pod.patch
-    patch -ruN -d . < otel-col-charts-template-pod.patch
+    patch -ruN -d . < otel-col-charts-values.schema.patch
     ```
     
 5. Install the `otel-demo` release
