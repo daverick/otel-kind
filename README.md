@@ -32,7 +32,7 @@
     
 4. Patch the OpenTelemetry-collector chart to allow Feature Flags -- tested with  OpenTelemetry Collector helm chart version 0.65.1
     
-    ```bah
+    ```bash
     patch -ruN -d . < otel-col-charts-template-pod.patch
     patch -ruN -d . < otel-col-charts-template-pod.patch
     ```
